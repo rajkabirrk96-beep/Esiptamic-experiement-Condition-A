@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Welcome to the Investment Study</h1>
+  <p>This study investigates how people make investment decisions with the assistance of AI-powered tools. You will complete <strong>15 investment rounds</strong>, each taking about 1-2 minutes.</p>
+  <p><strong>Total time:</strong> Approximately 35-40 minutes.</p>
+  <p><strong>What you will do:</strong> In each round, you will see two stocks and an AI recommendation. You will decide how to split $1,000 between the two stocks.</p>
+  <hr class="divider">
+  <p style="font-size:13px;color:var(--muted);">Your participation is voluntary and your responses are anonymous. Data will be used for academic research only.</p>
+</div>
+
+<div class="card">
+  <h2>Investment Profile — 4 Quick Questions</h2>
+  <p>Before we begin, please answer four short questions about your investment style. There are no right or wrong answers.</p>
+
+  <form method="POST" action="/prestudy">
+
+    <label>1. When you make an investment, how long do you typically plan to hold it before making a new decision?</label>
+    <select name="hold_duration" required>
+      <option value="">— Select one —</option>
+      <option value="Less than 1 month">Less than 1 month</option>
+      <option value="1 to 3 months">1 to 3 months</option>
+      <option value="3 to 6 months">3 to 6 months</option>
+      <option value="6 to 12 months">6 to 12 months</option>
+      <option value="More than 1 year">More than 1 year</option>
+    </select>
+
+    <label>2. What is your primary investment goal over the medium term — the next 1 to 3 years?</label>
+    <select name="investment_goal" required>
+      <option value="">— Select one —</option>
+      <option value="Capital preservation">Capital preservation — protect my money from losing value</option>
+      <option value="Steady growth">Steady growth — grow my money gradually with low risk</option>
+      <option value="High returns">High returns — maximize growth even if it means higher risk</option>
+      <option value="Income generation">Income generation — earn regular returns from my investments</option>
+    </select>
+
+    <label>3. If you were investing $1,000, how would you describe your risk tolerance?</label>
+    <select name="risk_tolerance" required>
+      <option value="">— Select one —</option>
+      <option value="Very conservative">Very conservative — I prefer to protect my money even if returns are low</option>
+      <option value="Somewhat conservative">Somewhat conservative — I prefer mostly safe investments with small potential gains</option>
+      <option value="Moderate">Moderate — I am comfortable balancing risk and return equally</option>
+      <option value="Somewhat aggressive">Somewhat aggressive — I am willing to accept higher risk for potentially higher returns</option>
+      <option value="Very aggressive">Very aggressive — I seek maximum returns and am comfortable with significant risk</option>
+    </select>
+
+    <label>4. Which investment sector do you find most interesting or relevant to your personal investment approach? Please select one.</label>
+    <select name="sector_choice" required>
+      <option value="">— Select one —</option>
+      <option value="Communication Services">Communication Services (e.g., media, telecommunications, internet companies)</option>
+      <option value="Consumer Discretionary">Consumer Discretionary (e.g., retail, automotive, e-commerce companies)</option>
+      <option value="Consumer Staples">Consumer Staples (e.g., food, household products, supermarket companies)</option>
+      <option value="Energy">Energy (e.g., oil, gas, renewable energy companies)</option>
+      <option value="Financials">Financials (e.g., banks, insurance, investment companies)</option>
+      <option value="Health Care">Health Care (e.g., pharmaceuticals, hospitals, medical device companies)</option>
+      <option value="Industrials">Industrials (e.g., aerospace, manufacturing, transportation companies)</option>
+      <option value="Information Technology">Information Technology (e.g., software, semiconductors, hardware companies)</option>
+      <option value="Materials">Materials (e.g., chemicals, mining, packaging companies)</option>
+      <option value="Real Estate">Real Estate (e.g., property development, REITs, real estate services)</option>
+      <option value="Utilities">Utilities (e.g., electric, gas, water utility companies)</option>
+    </select>
+
+    <button type="submit" class="btn btn-full">Begin Study — Round 1 of 15 →</button>
+  </form>
+</div>
+{% endblock %}

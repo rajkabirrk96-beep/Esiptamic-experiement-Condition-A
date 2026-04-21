@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set rnd_num, stock_a, price_a, change_a, stock_b, price_b, change_b = rnd_data %}
+{% set color_a = "var(--green)" if "+" in change_a else "var(--red)" %}
+{% set color_b = "var(--green)" if "+" in change_b else "var(--red)" %}
+
+<div class="card">
+  <h2>Round {{ rnd }} — Stock Movement</h2>
+  <p>Here is how each stock moved over the past 6 months. Review the price trajectories before moving to the next round.</p>
+
+  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+    <!-- Stock A -->
+    <div style="flex:1;min-width:280px;background:var(--gray);border-radius:10px;padding:20px;border:2px solid var(--border);">
+      <div style="font-weight:bold;color:var(--navy);font-size:16px;margin-bottom:4px;">{{ stock_a }}</div>
+      <div style="font-size:13px;color:var(--muted);">Starting price: ${{ "%.2f"|format(price_a) }}</div>
+      <div style="font-size:18px;font-weight:bold;margin:8px 0;" style="color:{{ color_a }};">
+        <span style="color:{{ color_a }};">{{ change_a }}</span> this period
+      </div>
+      <!-- Chart placeholder or actual chart -->
+      <div style="background:white;border-radius:8px;padding:10px;border:1px solid var(--border);margin-top:10px;text-align:center;">
+        <img src="/static/charts/R{{ rnd }}_A_{{ stock_a | replace(' ', '_') }}.png"
+             onerror="this.style.display='none';document.getElementById('chartA{{ rnd }}').style.display='block';"
+             style="width:100%;border-radius:6px;" alt="{{ stock_a }} trajectory">
+        <div id="chartA{{ rnd }}" style="display:none;padding:20px 0;">
+          <canvas id="canvasA{{ rnd }}" width="280" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock B -->
+    <div style="flex:1;min-width:280px;background:var(--gray);border-radius:10px;padding:20px;border:2px solid var(--border);">
+      <div style="font-weight:bold;color:var(--navy);font-size:16px;margin-bottom:4px;">{{ stock_b }}</div>
+      <div style="font-size:13px;color:var(--muted);">Starting price: ${{ "%.2f"|format(price_b) }}</div>
+      <div style="font-size:18px;font-weight:bold;margin:8px 0;">
+        <span style="color:{{ color_b }};">{{ change_b }}</span> this period
+      </div>
+      <div style="background:white;border-radius:8px;padding:10px;border:1px solid var(--border);margin-top:10px;text-align:center;">
+        <img src="/static/charts/R{{ rnd }}_B_{{ stock_b | replace(' ', '_') }}.png"
+             onerror="this.style.display='none';document.getElementById('chartB{{ rnd }}').style.display='block';"
+             style="width:100%;border-radius:6px;" alt="{{ stock_b }} trajectory">
+        <div id="chartB{{ rnd }}" style="display:none;padding:20px 0;">
+          <canvas id="canvasB{{ rnd }}" width="280" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <a href="{{ next_url }}" class="btn btn-full">
+      {% if rnd == 15 %}View Final Results →
+      {% elif rnd == 5 or rnd == 10 %}View Investment Summary →
+      {% else %}Continue to Round {{ rnd + 1 }} →
+      {% endif %}
+    </a>
+  </div>
+</div>
+
+<script>
+// Draw simple placeholder chart if image not found
+function drawChart(canvasId, startPrice, changeStr) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var isPos = changeStr.indexOf('+') >= 0;
+  var pct = parseFloat(changeStr.replace('%','').replace('+','')) / 100;
+
+  // Generate simple random walk
+  var points = [startPrice];
+  var seed = startPrice * 1000;
+  for (var i = 1; i <= 30; i++) {
+    seed = (seed * 9301 + 49297) % 233280;
+    var rand = (seed / 233280) - 0.5;
+    var trend = (pct / 30) * startPrice;
+    points.push(points[i-1] + trend + (rand * startPrice * 0.01));
+  }
+
+  var minP = Math.min.apply(null, points);
+  var maxP = Math.max.apply(null, points);
+  var pad = 20;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.beginPath();
+  for (var j = 0; j < points.length; j++) {
+    var x = pad + (j / (points.length-1)) * (W - pad*2);
+    var y = H - pad - ((points[j] - minP) / (maxP - minP + 0.001)) * (H - pad*2);
+    if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = isPos ? '#0F6E56' : '#A32D2D';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Fill
+  ctx.lineTo(W - pad, H - pad);
+  ctx.lineTo(pad, H - pad);
+  ctx.closePath();
+  ctx.fillStyle = isPos ? 'rgba(15,110,86,0.1)' : 'rgba(163,45,45,0.1)';
+  ctx.fill();
+}
+
+window.addEventListener('load', function() {
+  drawChart('canvasA{{ rnd }}', {{ price_a }}, '{{ change_a }}');
+  drawChart('canvasB{{ rnd }}', {{ price_b }}, '{{ change_b }}');
+});
+</script>
+{% endblock %}

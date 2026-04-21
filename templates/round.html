@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set rnd_num, stock_a, price_a, change_a, stock_b, price_b, change_b = rnd_data %}
+{% set pct = ((rnd - 1) / total_rounds * 100) | int %}
+{% set color_a = "var(--green)" if "+" in change_a else "var(--red)" %}
+{% set color_b = "var(--green)" if "+" in change_b else "var(--red)" %}
+
+<div class="progress-label">Round {{ rnd }} of {{ total_rounds }}</div>
+<div class="progress-bar">
+  <div class="progress-fill" style="width: {{ pct }}%"></div>
+</div>
+
+<!-- Phase indicator -->
+<div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+  {% for p in [1,2,3] %}
+  <div style="flex:1;height:6px;border-radius:99px;
+    background:{% if p <= phase %}var(--blue){% else %}var(--border){% endif %};
+    transition:background 0.3s;"></div>
+  {% endfor %}
+  <span style="font-size:12px;color:var(--muted);white-space:nowrap;">
+    Phase {{ phase }} of 3
+  </span>
+</div>
+
+<div class="card">
+  <h2>Round {{ rnd }} of {{ total_rounds }} — Investment Decision</h2>
+  <p>Review the two stocks and the personalized AI recommendation, then complete both steps.</p>
+
+  <!-- Stock table -->
+  <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-family:Arial;">
+    <thead>
+      <tr style="background:var(--navy);color:white;">
+        <th style="padding:12px 16px;text-align:left;">Stock</th>
+        <th style="padding:12px 16px;text-align:right;">Price</th>
+        <th style="padding:12px 16px;text-align:right;">Change</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:14px 16px;font-weight:bold;font-size:16px;">
+          <span style="display:inline-block;width:12px;height:12px;
+            background:var(--green);border-radius:50%;margin-right:8px;"></span>
+          Stock A — {{ stock_a }}
+        </td>
+        <td style="padding:14px 16px;text-align:right;font-size:16px;">
+          ${{ "%.2f"|format(price_a) }}
+        </td>
+        <td style="padding:14px 16px;text-align:right;
+          font-weight:bold;font-size:16px;color:{{ color_a }};">{{ change_a }}</td>
+      </tr>
+      <tr style="background:var(--gray);">
+        <td style="padding:14px 16px;font-weight:bold;font-size:16px;">
+          <span style="display:inline-block;width:12px;height:12px;
+            background:var(--red);border-radius:50%;margin-right:8px;"></span>
+          Stock B — {{ stock_b }}
+        </td>
+        <td style="padding:14px 16px;text-align:right;font-size:16px;">
+          ${{ "%.2f"|format(price_b) }}
+        </td>
+        <td style="padding:14px 16px;text-align:right;
+          font-weight:bold;font-size:16px;color:{{ color_b }};">{{ change_b }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- CONDITION A — Personalized AI text — changes by phase -->
+  <div style="background:#E8EEFF;padding:20px;border-radius:10px;
+              border-left:4px solid var(--blue);">
+    <div style="font-weight:bold;color:var(--navy);margin-bottom:10px;font-size:14px;">
+      🤖 AI RECOMMENDATION
+      <span style="font-size:11px;font-weight:normal;color:var(--blue);
+                   margin-left:8px;background:var(--light);padding:2px 8px;
+                   border-radius:99px;">
+        Phase {{ phase }} — {% if phase == 1 %}Profile based
+        {% elif phase == 2 %}Profile + History
+        {% else %}Full accumulated profile{% endif %}
+      </span>
+    </div>
+    <p style="color:var(--text);font-style:italic;margin-bottom:0;line-height:1.8;">
+      "{{ ai_text | safe }}"
+    </p>
+  </div>
+</div>
+
+<!-- Decision Form -->
+<form method="POST" action="/round/{{ rnd }}/submit">
+
+  <!-- STEP 1 — CONFIDENCE — before allocation — Problem 12 fix -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="background:var(--navy);color:white;border-radius:50%;
+                  width:32px;height:32px;display:flex;align-items:center;
+                  justify-content:center;font-weight:bold;flex-shrink:0;">1</div>
+      <h3 style="margin:0;">Confidence Measurement</h3>
+    </div>
+    <p>Before making your allocation — how confident are you that you can
+      identify the better investment opportunity this round?</p>
+
+    <div style="display:flex;justify-content:space-between;
+                font-size:13px;color:var(--muted);margin-bottom:10px;">
+      <span>0% — Not confident at all</span>
+      <span>100% — Extremely confident</span>
+    </div>
+
+    <input type="range" id="confidence" name="confidence"
+      min="0" max="100" value="50"
+      style="width:100%;height:10px;cursor:pointer;accent-color:var(--blue);"
+      oninput="updateConf(this.value)">
+
+    <div style="margin-top:20px;padding:16px;background:var(--gray);
+                border-radius:10px;text-align:center;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px;
+                  text-transform:uppercase;letter-spacing:1px;">
+        Your Confidence Level
+      </div>
+      <div style="display:flex;align-items:baseline;
+                  justify-content:center;gap:4px;">
+        <span id="confDisplay"
+          style="font-size:52px;font-weight:bold;color:var(--blue);
+                 line-height:1;transition:color 0.3s;">50</span>
+        <span style="font-size:24px;font-weight:bold;color:var(--blue);">%</span>
+      </div>
+      <div id="confLabel"
+        style="font-size:14px;color:var(--muted);margin-top:6px;">
+        Moderate confidence
+      </div>
+      <div style="margin-top:12px;background:var(--border);
+                  border-radius:99px;height:8px;overflow:hidden;">
+        <div id="confBar"
+          style="height:100%;width:50%;background:var(--blue);
+                 border-radius:99px;transition:width 0.2s,background 0.3s;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 — ALLOCATION — after confidence -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="background:var(--green);color:white;border-radius:50%;
+                  width:32px;height:32px;display:flex;align-items:center;
+                  justify-content:center;font-weight:bold;flex-shrink:0;">2</div>
+      <h3 style="margin:0;">Allocate Your $1,000</h3>
+    </div>
+    <p>Move the slider to split your <strong>$1,000</strong> between the two stocks.</p>
+
+    <div style="display:flex;justify-content:space-between;
+                font-size:13px;color:var(--muted);margin-bottom:8px;">
+      <span>← All to {{ stock_b }}</span>
+      <span>All to {{ stock_a }} →</span>
+    </div>
+    <input type="range" id="allocation" name="allocation"
+      min="0" max="100" value="50"
+      style="width:100%;height:14px;cursor:pointer;accent-color:var(--green);"
+      oninput="updateAlloc(this.value)">
+
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <div style="flex:1;background:var(--light);border-radius:10px;
+                  padding:16px;text-align:center;border:2px solid var(--blue);">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;
+                    text-transform:uppercase;letter-spacing:0.5px;">
+          Stock A — {{ stock_a }}
+        </div>
+        <div id="amtA"
+          style="font-size:36px;font-weight:bold;color:var(--green);">$500</div>
+        <div id="pctA"
+          style="font-size:12px;color:var(--muted);margin-top:2px;">50%</div>
+      </div>
+      <div style="display:flex;align-items:center;
+                  color:var(--muted);font-size:24px;font-weight:bold;">+</div>
+      <div style="flex:1;background:#FFF5F5;border-radius:10px;
+                  padding:16px;text-align:center;border:2px solid var(--border);">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;
+                    text-transform:uppercase;letter-spacing:0.5px;">
+          Stock B — {{ stock_b }}
+        </div>
+        <div id="amtB"
+          style="font-size:36px;font-weight:bold;color:var(--red);">$500</div>
+        <div id="pctB"
+          style="font-size:12px;color:var(--muted);margin-top:2px;">50%</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:12px;padding:10px;
+                background:var(--gray);border-radius:8px;">
+      <span style="color:var(--muted);font-size:14px;">Total:</span>
+      <span style="font-size:20px;font-weight:bold;color:var(--navy);"> $1,000</span>
+      &nbsp;&nbsp;
+      <span style="color:var(--muted);font-size:13px;">ACI:</span>
+      <span id="aciDisplay"
+        style="font-size:16px;font-weight:bold;color:var(--amber);"> 0.00</span>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-full">
+    Confirm Allocation — See Stock Movement →
+  </button>
+</form>
+
+<script>
+var confLabels = {
+  0:"No confidence at all", 10:"Very low confidence",
+  20:"Low confidence", 30:"Somewhat low confidence",
+  40:"Below average confidence", 50:"Moderate confidence",
+  60:"Above average confidence", 70:"Fairly confident",
+  80:"High confidence", 90:"Very high confidence",
+  100:"Extremely confident"
+};
+function getLabel(v) {
+  var keys=Object.keys(confLabels).map(Number).sort(function(a,b){return a-b;});
+  for(var i=keys.length-1;i>=0;i--){if(v>=keys[i])return confLabels[keys[i]];}
+  return confLabels[0];
+}
+function getColor(v) {
+  if(v<30) return '#A32D2D';
+  if(v<50) return '#BA7517';
+  if(v<70) return 'var(--blue)';
+  return '#0F6E56';
+}
+function updateConf(v) {
+  var n=parseInt(v), c=getColor(n);
+  document.getElementById('confDisplay').textContent=n;
+  document.getElementById('confDisplay').style.color=c;
+  document.getElementById('confLabel').textContent=getLabel(n);
+  var bar=document.getElementById('confBar');
+  if(bar){bar.style.width=n+'%';bar.style.background=c;}
+}
+function updateAlloc(v) {
+  var p=parseInt(v),a=Math.round(p*10),b=1000-a;
+  var aci=(Math.abs(p-50)*2/100).toFixed(2);
+  document.getElementById('amtA').textContent='$'+a;
+  document.getElementById('amtB').textContent='$'+b;
+  document.getElementById('pctA').textContent=p+'%';
+  document.getElementById('pctB').textContent=(100-p)+'%';
+  document.getElementById('aciDisplay').textContent=' '+aci;
+}
+window.addEventListener('load',function(){
+  var bar=document.getElementById('confBar');
+  if(bar){bar.style.width='50%';}
+});
+</script>
+{% endblock %}
