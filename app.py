@@ -207,7 +207,35 @@ def get_phase(rnd):
     if rnd <= 5:  return 1
     if rnd <= 10: return 2
     return 3
-
+@app.route('/admin')
+def admin():
+    pw = request.args.get('pw', '')
+    if pw != 'raj_data_conditionA_2024':
+        return render_template('admin_login.html')
+    responses = []
+    total = 0
+    avg_oci = 0
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r',
+                  encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+            total = len(rows)
+            responses = rows[-20:][::-1]
+            if rows:
+                ocis = []
+                for r in rows:
+                    try:
+                        ocis.append(float(r.get('oci',0)))
+                    except:
+                        pass
+                if ocis:
+                    avg_oci = round(
+                        sum(ocis)/len(ocis), 1)
+    return render_template('admin.html',
+        total=total,
+        responses=responses,
+        avg_oci=avg_oci)
 DATA_FILE = "/data/responses_A.csv"
 CSV_HEADERS = (
     ["participant_id","condition","sector","hold_duration",
