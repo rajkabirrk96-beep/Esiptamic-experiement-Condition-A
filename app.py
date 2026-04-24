@@ -208,7 +208,7 @@ def get_phase(rnd):
     if rnd <= 10: return 2
     return 3
 
-DATA_FILE = "DATA_FILE = "/data/responses_A.csv"
+DATA_FILE = "/data/responses_A.csv"
 CSV_HEADERS = (
     ["participant_id","condition","sector","hold_duration",
      "investment_goal","risk_tolerance","prolific_id","started_at","completed_at"] +
